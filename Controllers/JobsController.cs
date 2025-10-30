@@ -23,7 +23,6 @@ namespace JobCardBackend.Controllers
             if (jobDto == null)
                 return BadRequest("Job details missing.");
 
-            // ✅ Step 1: Check if the given UserId exists in the Users table
             var user = await _db.Users.FindAsync(jobDto.UserId);
             if (user == null)
                 return BadRequest($"User with ID {jobDto.UserId} not found.");
@@ -62,7 +61,6 @@ namespace JobCardBackend.Controllers
         {
             var job = await _db.JobCards.FindAsync(id);
             if (job == null) return NotFound("Job not found.");
-            //  Try to read existing processes as Dictionary
             Dictionary<string, string> processDict;
             try
             {
@@ -71,13 +69,11 @@ namespace JobCardBackend.Controllers
             }
             catch
             {
-                // handle legacy array format
                 var arr = System.Text.Json.JsonSerializer.Deserialize<List<string>>(job.Processes)
                           ?? new List<string>();
                 processDict = arr.ToDictionary(p => p, p => "Pending");
             }
 
-            // 🟢 Step 2: Mark updated ones as Completed
             foreach (var process in updatedProcesses)
             {
                 var key = process.Trim();
@@ -85,7 +81,6 @@ namespace JobCardBackend.Controllers
                     processDict[key] = "Completed";
             }
 
-            // 🟢 Step 3: Save updated dictionary
             job.Processes = System.Text.Json.JsonSerializer.Serialize(processDict);
             await _db.SaveChangesAsync();
             return Ok(job);
@@ -196,7 +191,6 @@ Your reply should be plain text only.
                 .GetProperty("content")
                 .GetString();
 
-            // ✅ Auto-trim and normalize
             var cleanMessage = aiMessage?.Trim().ToLower();
 
             return Ok(cleanMessage);
